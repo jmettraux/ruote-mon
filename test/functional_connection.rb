@@ -10,8 +10,8 @@ require 'ruote-mon'
 
 def new_storage(opts)
 
-  con = Mongo::Connection.new
-
-  Ruote::Mon::Storage.new(Mongo::Connection.new['ruote_mon_test'])
+  Ruote::Mon::Storage.new(
+    Mongo::Connection.new['ruote_mon_test'],
+    opts)
 end
 
