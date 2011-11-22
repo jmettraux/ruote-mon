@@ -36,6 +36,11 @@ module Mon
 
     include Ruote::StorageBase
 
+    TYPES = %w[
+      msgs schedules expressions workitems errors
+      configurations variables trackers
+    ]
+
     attr_reader :db
 
     def initialize(mongo_db, options={})
