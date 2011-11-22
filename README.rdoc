@@ -1,0 +1,59 @@
+
+= ruote-mon
+
+WARNING: this is only an experiment
+
+This is a MongoDB storage for ruote.
+
+The real stuff is at https://github.com/PlasticLizard/ruote-mongodb
+
+
+== usage
+
+...
+
+
+== running tests
+
+assuming you have
+
+  ruote/
+  ruote-mon/
+
+start your MongoDB server and then
+
+
+* unit tests :
+
+get into ruote/ and do
+
+  ruby test/unit/storage.rb -- --mon
+
+* functional tests :
+
+get into ruote/ and do
+
+  ruby test/functional/test.rb -- --mon
+
+
+== license
+
+MIT
+
+
+== links
+
+* http://ruote.rubyforge.org/
+* http://github.com/jmettraux/ruote-mon
+
+
+== feedback
+
+mailing list : http://groups.google.com/group/openwferu-users
+irc : irc.freenode.net #ruote
+
+
+== many thanks to
+
+- ...
+

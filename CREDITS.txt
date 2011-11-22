@@ -1,0 +1,14 @@
+
+= ruote-mon CREDITS.txt
+
+
+== authors
+
+- John Mettraux  http://jmettraux.wordpress.com
+
+
+== contributors
+
+
+== many thanks to
+
