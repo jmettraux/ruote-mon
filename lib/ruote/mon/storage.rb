@@ -47,11 +47,12 @@ module Mon
       @db = mongo_db
       @options = options
 
-      TYPES.each do |t|
-        collection(t).ensure_index('at') if t == 'schedules'
-        collection(t).ensure_index('_wfid') unless t == 'msgs'
+      (TYPES - %w[ msgs schedules ]).each do |t|
+        collection(t).ensure_index('_wfid')
         collection(t).ensure_index([ [ '_id', 1 ], [ '_rev', 1 ] ])
       end
+      collection('schedules').ensure_index('_wfid')
+      collection('schedules').ensure_index('at')
 
       replace_engine_configuration(options)
     end
@@ -63,12 +64,12 @@ module Mon
       ).to_a
     end
 
-    # Returns true if the doc is successfully deleted.
+    # Returns true if the doc was successfully deleted.
     #
     def reserve(doc)
 
       r = collection(doc).remove(
-        { '_id' => doc['_id'], '_rev' => doc['_rev'] },
+        { '_id' => doc['_id'] },
         :safe => true)
 
       r['n'] == 1
