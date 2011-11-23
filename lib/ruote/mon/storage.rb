@@ -24,7 +24,6 @@
 
 require 'mongo'
 
-#require 'rufus-json'
 require 'ruote/storage/base'
 require 'ruote/mon/version'
 
@@ -48,10 +47,16 @@ module Mon
       @db = mongo_db
       @options = options
 
-      # TODO: add indexes
+      TYPES.each do |t|
+        collection(t).ensure_index('at') if t == 'schedules'
+        collection(t).ensure_index('_wfid') unless t == 'msgs'
+        collection(t).ensure_index([ [ '_id', 1 ], [ '_rev', 1 ] ])
+      end
 
       replace_engine_configuration(options)
     end
+
+    # TODO : #get_schedules
 
     # Returns true if the doc is successfully deleted.
     #
