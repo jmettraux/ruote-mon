@@ -10,7 +10,16 @@ The real stuff is at https://github.com/PlasticLizard/ruote-mongodb
 
 == usage
 
-...
+  require 'ruote'
+  require 'ruote-mon'
+
+  ruote = Ruote::Dashboard.new(
+    Ruote::Worker.new(
+      Ruote::Mon::Storage.new(
+        Mongo::Connection.new()['ruote_mon_test'],
+        {})))
+
+  # ...
 
 
 == running tests
