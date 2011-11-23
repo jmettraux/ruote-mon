@@ -38,7 +38,7 @@ module Mon
 
     TYPES = %w[
       msgs schedules expressions workitems errors
-      configurations variables trackers
+      configurations variables trackers history
     ]
 
     attr_reader :db
@@ -70,7 +70,7 @@ module Mon
       doc = doc.dup
 
       doc['_rev'] = (doc['_rev'] || -1) + 1
-      doc['_tail_id'] ||= doc['_id'].split('!').last
+      doc['_wfid'] = doc['_id'].split('!').last
       doc['put_at'] = Ruote.now_to_utc_s
 
       r = begin
@@ -115,13 +115,14 @@ module Mon
     def get_many(type, key=nil, opts={})
 
       opts = Ruote.keys_to_s(opts)
+      keys = key ? Array(key) : nil
 
-      cursor = if key.nil?
+      cursor = if keys.nil?
         collection(type).find
-      elsif key.is_a?(Regexp)
-        collection(type).find('_id' => key)
+      elsif keys.first.is_a?(Regexp)
+        collection(type).find('_id' => { '$in' => keys })
       else # a String
-        collection(type).find('_tail_id' => key)
+        collection(type).find('_wfid' => { '$in' => keys })
       end
 
       return cursor.count if opts['count']
