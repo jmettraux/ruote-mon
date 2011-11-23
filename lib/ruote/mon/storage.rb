@@ -56,7 +56,12 @@ module Mon
       replace_engine_configuration(options)
     end
 
-    # TODO : #get_schedules
+    def get_schedules(delta, now)
+
+      collection('schedules').find(
+        'at' => { '$lte' => Ruote.time_to_utc_s(now) }
+      ).to_a
+    end
 
     # Returns true if the doc is successfully deleted.
     #
@@ -173,7 +178,7 @@ module Mon
     def close
     end
 
-    # Shuts this worker down.
+    # Shuts this storage down.
     #
     def shutdown
     end
