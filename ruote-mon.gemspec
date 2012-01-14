@@ -24,8 +24,8 @@ MongoDB experimental storage for ruote (a Ruby workflow engine)
     '*.gemspec', '*.txt', '*.rdoc', '*.md'
   ]
 
-  s.add_runtime_dependency 'bson_ext', '1.4.0'
-  s.add_runtime_dependency 'mongo', '1.4.0'
+  s.add_runtime_dependency 'bson_ext'#, '>= 1.4.0'
+  s.add_runtime_dependency 'mongo'#, '>= 1.4.0'
   s.add_runtime_dependency 'ruote', ">= #{s.version}"
 
   s.add_development_dependency 'rake'
