@@ -10,8 +10,14 @@ require 'ruote-mon'
 
 def new_storage(opts)
 
-  Ruote::Mon::Storage.new(
-    Mongo::Connection.new['ruote_mon_test'],
-    opts)
+  con = Mongo::Connection.new
+
+  #con = Mongo::Connection.new(nil, nil, :refresh_mode => :sync)
+    #
+    # http://groups.google.com/group/mongodb-user/browse_thread/thread/7d09df9fa765891e
+    #
+    # but it doesn't work.
+
+  Ruote::Mon::Storage.new(con['ruote_mon_test'], opts)
 end
 
