@@ -1,11 +1,11 @@
 
 = ruote-mon
 
-WARNING: this is only an experiment
+A MongoDB storage for ruote.
 
-This is a MongoDB storage for ruote.
+This is the 'official' storage. There is also: https://github.com/PlasticLizard/ruote-mongodb but it contains optimizations for Plastic Lizard's team.
 
-The real stuff is at https://github.com/PlasticLizard/ruote-mongodb
+Works best with a 1.9.x Ruby.
 
 
 == usage
@@ -60,9 +60,4 @@ MIT
 
 mailing list : http://groups.google.com/group/openwferu-users
 irc : irc.freenode.net #ruote
-
-
-== many thanks to
-
-- ...
 

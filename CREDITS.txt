@@ -4,11 +4,13 @@
 
 == authors
 
-- John Mettraux  http://jmettraux.wordpress.com
+- John Mettraux - http://jmettraux.wordpress.com
 
 
 == contributors
 
 
 == many thanks to
+
+- Nathan Stults - https://github.com/PlasticLizard
 
