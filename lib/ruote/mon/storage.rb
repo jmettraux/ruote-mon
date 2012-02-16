@@ -75,6 +75,31 @@ module Mon
       r['n'] == 1
     end
 
+    # Puts a msg. Doesn't use :safe => true, it's always an insert with a
+    # new id.
+    #
+    def put_msg(action, options)
+
+      msg = prepare_msg_doc(action, options)
+      msg['put_at'] = Ruote.now_to_utc_s
+
+      msg['_rev'] = 0
+        # in case of msg replay
+
+      begin
+
+        collection(msg).insert(msg)
+
+      rescue BSON::InvalidKeyName
+        #
+        # Seems like there is some kind of issue when inserting a string
+        # key that begins with '$'... This is a workaround... Need to
+        # send issue report to the maintainer of the mongo db ruby driver...
+        #
+        collection(msg).update({ '_id' => msg['_id'] }, msg, :upsert => true)
+      end
+    end
+
     def put(doc, opts={})
 
       original = doc
