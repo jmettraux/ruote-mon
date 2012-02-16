@@ -12,9 +12,9 @@ Gem::Specification.new do |s|
   s.email = [ 'jmettraux@gmail.com' ]
   s.homepage = 'http://ruote.rubyforge.org'
   s.rubyforge_project = 'ruote'
-  s.summary = 'MongoDB experimental storage for ruote (a Ruby workflow engine)'
+  s.summary = 'MongoDB storage for ruote (a Ruby workflow engine)'
   s.description = %q{
-MongoDB experimental storage for ruote (a Ruby workflow engine)
+MongoDB storage for ruote (a Ruby workflow engine)
 }
 
   #s.files = `git ls-files`.split("\n")
