@@ -47,6 +47,9 @@ module Mon
       @db = mongo_db
       @options = options
 
+      #collection('msgs').drop_index('_id_')
+        # can't do that...
+
       (TYPES - %w[ msgs schedules ]).each do |t|
         collection(t).ensure_index('_wfid')
         collection(t).ensure_index([ [ '_id', 1 ], [ '_rev', 1 ] ])
