@@ -1,3 +1,9 @@
 
 [ ] Storage#drop_indexes
 
+== for the StorageParticipant
+[ ] Storage#by_wfid
+[ ] Storage#by_field
+[ ] Storage#by_participant
+[ ] Storage#query_workitems
+
