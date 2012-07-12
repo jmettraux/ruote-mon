@@ -122,7 +122,9 @@ module Mon
       end
 
       if r && (r['updatedExisting'] || original['_rev'].nil?)
-        original['_rev'] = doc['_rev'] if opts[:update_rev]
+        original.merge!(
+          '_rev' => doc['_rev'], 'put_at' => doc['put_at']
+        ) if opts[:update_rev]
         nil
       else
         collection(doc).find_one('_id' => doc['_id']) || true
