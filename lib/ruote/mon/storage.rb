@@ -54,7 +54,7 @@ module Mon
         collection(t).ensure_index('_wfid')
         collection(t).ensure_index([ [ '_id', 1 ], [ '_rev', 1 ] ])
       end
-      #collection('schedules').ensure_index('_wfid')
+      collection('schedules').ensure_index('_wfid')
       collection('schedules').ensure_index('at')
 
       replace_engine_configuration(options)
@@ -111,6 +111,10 @@ module Mon
       doc['_rev'] = (doc['_rev'] || -1) + 1
       doc['_wfid'] = doc['_id'].split('!').last
       doc['put_at'] = Ruote.now_to_utc_s
+
+      if doc['type'] == 'schedules'
+        doc['_wfid'] = doc['_wfid'].split('-')[0..-2].join('-')
+      end
 
       r = begin
         collection(doc).update(
