@@ -190,18 +190,6 @@ module Mon
       TYPES.each { |t| collection(t).remove }
     end
 
-    # Returns a String containing a representation of the current content of
-    # in this Redis storage.
-    #
-    def dump(type)
-
-      r = [ "== #{type} ==" ]
-
-      collection(type).find.inject(r) { |a, doc|
-        a << doc.inspect
-      }.join("\n")
-    end
-
     # Shuts this storage down.
     #
     def close
