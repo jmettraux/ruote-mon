@@ -199,11 +199,15 @@ module Mon
     # Shuts this storage down.
     #
     def close
+
+      @db.connection.close
     end
 
     # Shuts this storage down.
     #
     def shutdown
+
+      @db.connection.close
     end
 
     # Mainly used by ruote's test/unit/ut_17_storage.rb
