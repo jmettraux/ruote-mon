@@ -2,5 +2,5 @@
 = ruote-mon - CHANGELOG.txt
 
 
-== ruote-mon 2.2.1    not yet released
+== ruote-mon 2.3.0    not yet released
 
