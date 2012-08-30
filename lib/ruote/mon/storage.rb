@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 #--
 # Copyright (c) 2011-2012, John Mettraux, jmettraux@gmail.com
 #
@@ -62,9 +64,9 @@ module Mon
 
     def get_schedules(delta, now)
 
-      collection('schedules').find(
+      from_mongo(collection('schedules').find(
         'at' => { '$lte' => Ruote.time_to_utc_s(now) }
-      ).to_a
+      ).to_a)
     end
 
     # Returns true if the doc was successfully deleted.
@@ -89,18 +91,7 @@ module Mon
       msg['_rev'] = 0
         # in case of msg replay
 
-      begin
-
-        collection(msg).insert(msg)
-
-      rescue BSON::InvalidKeyName
-        #
-        # Seems like there is some kind of issue when inserting a string
-        # key that begins with '$'... This is a workaround... Need to
-        # send issue report to the maintainer of the mongo db ruby driver...
-        #
-        collection(msg).update({ '_id' => msg['_id'] }, msg, :upsert => true)
-      end
+      collection(msg).insert(to_mongo(msg))
     end
 
     def put(doc, opts={})
@@ -119,7 +110,7 @@ module Mon
       r = begin
         collection(doc).update(
           { '_id' => doc['_id'], '_rev' => original['_rev'] },
-          doc,
+          to_mongo(opts[:update_rev] ? Ruote.fulldup(doc) : doc),
           :safe => true, :upsert => original['_rev'].nil?)
       rescue Mongo::OperationFailure
         false
@@ -131,13 +122,13 @@ module Mon
         ) if opts[:update_rev]
         nil
       else
-        collection(doc).find_one('_id' => doc['_id']) || true
+        from_mongo(collection(doc).find_one('_id' => doc['_id']) || true)
       end
     end
 
     def get(type, key)
 
-      collection(type).find_one('_id' => key)
+      from_mongo(collection(type).find_one('_id' => key))
     end
 
     def delete(doc)
@@ -153,7 +144,7 @@ module Mon
       if r['n'] == 1
         nil
       else
-        collection(doc).find_one('_id' => doc['_id']) || true
+        from_mongo(collection(doc).find_one('_id' => doc['_id']) || true)
       end
     end
 
@@ -178,7 +169,7 @@ module Mon
       cursor.skip(opts['skip'])
       cursor.limit(opts['limit'])
 
-      cursor.to_a
+      from_mongo(cursor.to_a)
     end
 
     def ids(type)
@@ -226,10 +217,53 @@ module Mon
 
     protected
 
+    # Given a doc, returns the MongoDB collection it should go to.
+    #
     def collection(doc_or_type)
 
       @db.collection(
         doc_or_type.is_a?(String) ? doc_or_type : doc_or_type['type'])
+    end
+
+    # Prepares the doc for insertion in MongoDB (takes care of keys beginning
+    # with '$' and/or containing '.')
+    #
+    def to_mongo(doc)
+
+      Ruote.deep_mutate(doc, /^\$/,) { |h, k, v|
+        h.delete(k)
+        h["`#{k}"] = v
+      }
+      Ruote.deep_mutate(doc, /\./,) { |h, k, v|
+        h.delete(k)
+        h[k.gsub(/\./, '˛')] = v # ogonek in
+      }
+    end
+
+    # The real work being #from_mongo is done here.
+    #
+    def _from_mongo(doc)
+
+      Ruote.deep_mutate(doc, /^`\$/,) { |h, k, v|
+        h.delete(k)
+        h[k[1..-1]] = v
+      }
+      Ruote.deep_mutate(doc, /˛/,) { |h, k, v|
+        h.delete(k)
+        h[k.gsub(/˛/, '.')] = v # ogonek out
+      }
+    end
+
+    # Prepare the doc for consumption out of MongoDB (takes care of keys
+    # beginning with '$' and/or containing '.')
+    #
+    def from_mongo(docs)
+
+      case docs
+        when true, nil then docs
+        when Array then docs.collect { |doc| _from_mongo(doc) }
+        else _from_mongo(docs)
+      end
     end
   end
 end
