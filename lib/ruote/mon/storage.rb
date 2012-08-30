@@ -230,11 +230,11 @@ module Mon
     #
     def to_mongo(doc)
 
-      Ruote.deep_mutate(doc, /^\$/,) { |h, k, v|
+      Ruote.deep_mutate(doc, /^\$/) { |h, k, v|
         h.delete(k)
         h["`#{k}"] = v
       }
-      Ruote.deep_mutate(doc, /\./,) { |h, k, v|
+      Ruote.deep_mutate(doc, /\./) { |h, k, v|
         h.delete(k)
         h[k.gsub(/\./, '˛')] = v # ogonek in
       }
@@ -244,11 +244,11 @@ module Mon
     #
     def _from_mongo(doc)
 
-      Ruote.deep_mutate(doc, /^`\$/,) { |h, k, v|
+      Ruote.deep_mutate(doc, /^`\$/) { |h, k, v|
         h.delete(k)
         h[k[1..-1]] = v
       }
-      Ruote.deep_mutate(doc, /˛/,) { |h, k, v|
+      Ruote.deep_mutate(doc, /˛/) { |h, k, v|
         h.delete(k)
         h[k.gsub(/˛/, '.')] = v # ogonek out
       }
