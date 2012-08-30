@@ -230,9 +230,11 @@ module Mon
     #
     def to_mongo(doc)
 
+      # vertical tilde and ogonek to the rescue
+
       Ruote.deep_mutate(doc, [ /^\$/, /\./ ]) { |h, k, v|
         h.delete(k)
-        h[k.gsub(/^\$/, '`$').gsub(/\./, '˛')] = v
+        h[k.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛')] = v
       }
     end
 
@@ -240,9 +242,11 @@ module Mon
     #
     def _from_mongo(doc)
 
-      Ruote.deep_mutate(doc, [ /^`\$/, /˛/ ]) { |h, k, v|
+      # vertical tilde and ogonek to the rescue
+
+      Ruote.deep_mutate(doc, [ /^ⸯ\$/, /˛/ ]) { |h, k, v|
         h.delete(k)
-        h[k.gsub(/^`\$/, '$').gsub(/˛/, '.')] = v
+        h[k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.')] = v
       }
     end
 
