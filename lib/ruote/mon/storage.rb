@@ -217,30 +217,24 @@ module Mon
     #
     def by_field(type, key, value)
 
-      docs = paginate(
+      paginate_workitems(
         collection(type).find("fields.#{key}" => value),
         {})
-
-      docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
     end
 
     def by_participant(type, participant_name, opts={})
 
-      docs = paginate(
+      paginate_workitems(
         collection(type).find('participant_name' => participant_name),
         opts)
-
-      docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
     end
 
     def query_workitems(query)
 
-      docs = paginate(
+      paginate_workitems(
         collection('workitems').find(
           query.each_with_object({}) { |(k, v), h| h["fields.#{k}"] = v }),
         {})
-
-      docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
     end
 
     protected
@@ -267,6 +261,15 @@ module Mon
       cursor.limit(opts['limit'])
 
       from_mongo(cursor.to_a)
+    end
+
+    # Wrapping around #paginate for workitems.
+    #
+    def paginate_workitems(cursor, opts)
+
+      docs = paginate(cursor, opts)
+
+      docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
     end
 
     # Prepares the doc for insertion in MongoDB (takes care of keys beginning
