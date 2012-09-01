@@ -233,6 +233,16 @@ module Mon
       docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
     end
 
+    def query_workitems(query)
+
+      docs = paginate(
+        collection('workitems').find(
+          query.each_with_object({}) { |(k, v), h| h["fields.#{k}"] = v }),
+        {})
+
+      docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
+    end
+
     protected
 
     # Given a doc, returns the MongoDB collection it should go to.
