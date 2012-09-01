@@ -161,15 +161,7 @@ module Mon
         collection(type).find('_wfid' => { '$in' => keys })
       end
 
-      return cursor.count if opts['count']
-
-      cursor.sort(
-        '_id', opts['descending'] ? Mongo::DESCENDING : Mongo::ASCENDING)
-
-      cursor.skip(opts['skip'])
-      cursor.limit(opts['limit'])
-
-      from_mongo(cursor.to_a)
+      paginate(cursor, opts)
     end
 
     def ids(type)
@@ -215,6 +207,19 @@ module Mon
       collection(type).remove
     end
 
+    #--
+    # workitem methods
+    #++
+
+    def by_participant(type, participant_name, opts={})
+
+      docs = paginate(
+        collection(type).find('participant_name' => participant_name),
+        opts)
+
+      docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
+    end
+
     protected
 
     # Given a doc, returns the MongoDB collection it should go to.
@@ -223,6 +228,22 @@ module Mon
 
       @db.collection(
         doc_or_type.is_a?(String) ? doc_or_type : doc_or_type['type'])
+    end
+
+    # Given a cursor, applies the count/skip/limit/descending options
+    # if requested.
+    #
+    def paginate(cursor, opts)
+
+      return cursor.count if opts['count']
+
+      cursor.sort(
+        '_id', opts['descending'] ? Mongo::DESCENDING : Mongo::ASCENDING)
+
+      cursor.skip(opts['skip'])
+      cursor.limit(opts['limit'])
+
+      from_mongo(cursor.to_a)
     end
 
     # Prepares the doc for insertion in MongoDB (takes care of keys beginning
