@@ -215,11 +215,13 @@ module Mon
     #
     # http://www.mongodb.org/display/DOCS/Advanced+Queries
     #
-    def by_field(type, key, value)
+    def by_field(type, key, value, opts={})
+
+      value = { '$exists' => true } if value.nil?
 
       paginate_workitems(
         collection(type).find("fields.#{key}" => value),
-        {})
+        opts)
     end
 
     def by_participant(type, participant_name, opts={})
@@ -231,10 +233,25 @@ module Mon
 
     def query_workitems(query)
 
+      query = Ruote.keys_to_s(query)
+
+      opts = {}
+      opts['count'] = query.delete('count')
+      opts['skip'] = query.delete('skip') || query.delete('offset')
+      opts['limit'] = query.delete('limit')
+      opts['descending'] = query.delete('descending')
+
+      wfid = query.delete('wfid')
+      pname = query.delete('participant') || query.delete('participant_name')
+
+      query = query.each_with_object({}) { |(k, v), h| h["fields.#{k}"] = v }
+
+      query['wfid'] = wfid if wfid
+      query['participant_name'] = pname if pname
+
       paginate_workitems(
-        collection('workitems').find(
-          query.each_with_object({}) { |(k, v), h| h["fields.#{k}"] = v }),
-        {})
+        collection('workitems').find(query),
+        opts)
     end
 
     protected
@@ -251,6 +268,8 @@ module Mon
     # if requested.
     #
     def paginate(cursor, opts)
+
+      opts = Ruote.keys_to_s(opts)
 
       return cursor.count if opts['count']
 
