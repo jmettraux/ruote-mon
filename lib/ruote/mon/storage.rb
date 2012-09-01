@@ -211,6 +211,19 @@ module Mon
     # workitem methods
     #++
 
+    # Note: no check on value, MongoDB specific queries can be used...
+    #
+    # http://www.mongodb.org/display/DOCS/Advanced+Queries
+    #
+    def by_field(type, key, value)
+
+      docs = paginate(
+        collection(type).find("fields.#{key}" => value),
+        {})
+
+      docs.is_a?(Array) ? docs.collect { |h| Ruote::Workitem.new(h) } : docs
+    end
+
     def by_participant(type, participant_name, opts={})
 
       docs = paginate(
