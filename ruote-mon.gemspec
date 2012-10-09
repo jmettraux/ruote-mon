@@ -26,7 +26,7 @@ MongoDB storage for ruote (a Ruby workflow engine)
 
   s.add_runtime_dependency 'bson_ext'#, '>= 1.4.0'
   s.add_runtime_dependency 'mongo'#, '>= 1.4.0'
-  s.add_runtime_dependency 'ruote', ">= #{s.version}"
+  s.add_runtime_dependency 'ruote', ">= #{s.version.to_s.split('.')[0, 3].join('.')}"
 
   s.add_development_dependency 'rake'
 
