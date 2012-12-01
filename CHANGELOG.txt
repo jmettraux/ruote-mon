@@ -2,6 +2,11 @@
 = ruote-mon - CHANGELOG.txt
 
 
+== ruote-mon 2.3.1    not yet released
+
+- use rekey instead of Ruote.deep_mutate
+
+
 == ruote-mon 2.3.0    released 2012/09/01
 
 - initial release

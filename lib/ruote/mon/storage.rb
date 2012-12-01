@@ -298,22 +298,7 @@ module Mon
 
       # vertical tilde and ogonek to the rescue
 
-      Ruote.deep_mutate(doc, [ /^\$/, /\./ ]) { |h, k, v|
-        h.delete(k)
-        h[k.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛')] = v
-      }
-    end
-
-    # The real work being #from_mongo is done here.
-    #
-    def _from_mongo(doc)
-
-      # vertical tilde and ogonek to the rescue
-
-      Ruote.deep_mutate(doc, [ /^ⸯ\$/, /˛/ ]) { |h, k, v|
-        h.delete(k)
-        h[k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.')] = v
-      }
+      rekey(doc) { |k| k.to_s.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛') }
     end
 
     # Prepare the doc for consumption out of MongoDB (takes care of keys
@@ -321,10 +306,17 @@ module Mon
     #
     def from_mongo(docs)
 
-      case docs
-        when true, nil then docs
-        when Array then docs.collect { |doc| _from_mongo(doc) }
-        else _from_mongo(docs)
+      rekey(docs) { |k| k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.') }
+    end
+
+    # rekeys hashes and sub-hashes. Simpler than Ruote.deep_mutate
+    #
+    def rekey(o, &block)
+
+      case o
+        when Hash; o.remap { |(k, v), h| h[block.call(k)] = rekey(v, &block) }
+        when Array; o.collect { |e| rekey(e, &block) }
+        else o
       end
     end
   end
