@@ -316,6 +316,7 @@ module Mon
       case o
         when Hash; o.remap { |(k, v), h| h[block.call(k)] = rekey(v, &block) }
         when Array; o.collect { |e| rekey(e, &block) }
+        when Symbol; o.to_s
         else o
       end
     end
