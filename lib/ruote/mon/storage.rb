@@ -24,8 +24,6 @@
 # Made in Japan.
 #++
 
-require 'mongo'
-
 require 'ruote/storage/base'
 require 'ruote/mon/version'
 
@@ -44,20 +42,20 @@ module Mon
 
     attr_reader :db
 
-    def initialize(mongo_db, options={})
+    def initialize(moped_session, options={})
 
-      @db = mongo_db
+      @session = moped_session
       @options = options
 
       #collection('msgs').drop_index('_id_')
         # can't do that...
 
       (TYPES - %w[ msgs schedules ]).each do |t|
-        collection(t).ensure_index('_wfid')
-        collection(t).ensure_index([ [ '_id', 1 ], [ '_rev', 1 ] ])
+        collection(t).indexes.create({ '_wfid' => 1 })
+        collection(t).indexes.create({ '_id' => 1, '_rev' => 1 })
       end
-      collection('schedules').ensure_index('_wfid')
-      collection('schedules').ensure_index('at')
+      collection('schedules').indexes.create({ '_wfid' => 1 })
+      collection('schedules').indexes.create({ 'at' => 1 })
 
       replace_engine_configuration(options)
     end
@@ -65,7 +63,7 @@ module Mon
     def get_schedules(delta, now)
 
       from_mongo(collection('schedules').find(
-        'at' => { '$lte' => Ruote.time_to_utc_s(now) }
+        { '$lte' => Ruote.time_to_utc_s(now) }
       ).to_a)
     end
 
@@ -73,11 +71,13 @@ module Mon
     #
     def reserve(doc)
 
-      r = collection(doc).remove(
-        { '_id' => doc['_id'] },
-        :safe => true)
+      @session.with(safe: true) do |session|
+        session[doc['type']].find(
+          { '_id' => doc['_id'] }
+        ).remove_all
+      end
 
-      r['n'] == 1
+      true
     end
 
     # Puts a msg. Doesn't use :safe => true, it's always an insert with a
@@ -108,11 +108,15 @@ module Mon
       end
 
       r = begin
-        collection(doc).update(
-          { '_id' => doc['_id'], '_rev' => original['_rev'] },
-          to_mongo(opts[:update_rev] ? Ruote.fulldup(doc) : doc),
-          :safe => true, :upsert => original['_rev'].nil?)
-      rescue Mongo::OperationFailure
+        @session.with(safe: true) do |session|
+          d =  session[doc['type']].find({ '_id' => doc['_id'], '_rev' => original['_rev'] })
+          if original['_rev'].nil?
+            d.upsert(to_mongo(opts[:update_rev] ? Ruote.fulldup(doc) : doc))
+          else
+            d.update(to_mongo(opts[:update_rev] ? Ruote.fulldup(doc) : doc))
+          end
+        end
+      rescue
         false
       end
 
@@ -122,13 +126,13 @@ module Mon
         ) if opts[:update_rev]
         nil
       else
-        from_mongo(collection(doc).find_one('_id' => doc['_id']) || true)
+        from_mongo(collection(doc).find('_id' => doc['_id']).one || true)
       end
     end
 
     def get(type, key)
 
-      from_mongo(collection(type).find_one('_id' => key))
+      from_mongo(collection(type).find({ '_id' => key }).one)
     end
 
     def delete(doc)
@@ -137,14 +141,16 @@ module Mon
 
       raise ArgumentError.new("can't delete doc without _rev") unless rev
 
-      r = collection(doc).remove(
-        { '_id' => doc['_id'], '_rev' => doc['_rev'] },
-        :safe => true)
+      @session.with(safe: true) do |session|
+        r = session[doc['type']].remove(
+          { '_id' => doc['_id'], '_rev' => doc['_rev'] }
+        )
+      end
 
       if r['n'] == 1
         nil
       else
-        from_mongo(collection(doc).find_one('_id' => doc['_id']) || true)
+        from_mongo(collection(doc).find('_id' => doc['_id']).one || true)
       end
     end
 
@@ -166,9 +172,8 @@ module Mon
 
     def ids(type)
 
-      collection(type).find(
-        {},
-        :fields => [], :sort => [ '_id', Mongo::ASCENDING ]
+      collection(type).find.sort(
+        { '_id' => 1 }
       ).collect { |d|
         d['_id']
       }
@@ -183,14 +188,14 @@ module Mon
     #
     def close
 
-      @db.connection.close
+      @session.disconnect
     end
 
     # Shuts this storage down.
     #
     def shutdown
 
-      @db.connection.close
+      @session.disconnect
     end
 
     # Mainly used by ruote's test/unit/ut_17_storage.rb
@@ -228,7 +233,8 @@ module Mon
 
       paginate_workitems(
         collection(type).find('participant_name' => participant_name),
-        opts)
+        opts
+     )
     end
 
     def query_workitems(query)
@@ -251,7 +257,8 @@ module Mon
 
       paginate_workitems(
         collection('workitems').find(query),
-        opts)
+        opts
+      )
     end
 
     protected
@@ -260,8 +267,8 @@ module Mon
     #
     def collection(doc_or_type)
 
-      @db.collection(
-        doc_or_type.is_a?(String) ? doc_or_type : doc_or_type['type'])
+      collection = doc_or_type.is_a?(String) ? doc_or_type : doc_or_type['type']
+      @session[collection]
     end
 
     # Given a cursor, applies the count/skip/limit/descending options
@@ -274,7 +281,8 @@ module Mon
       return cursor.count if opts['count']
 
       cursor.sort(
-        '_id', opts['descending'] ? Mongo::DESCENDING : Mongo::ASCENDING)
+        { '_id' => opts['descending'] ? -1 : 1 }
+      )
 
       cursor.skip(opts['skip'])
       cursor.limit(opts['limit'])
@@ -298,7 +306,8 @@ module Mon
 
       # vertical tilde and ogonek to the rescue
 
-      rekey(doc) { |k| k.to_s.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛') }
+      # rekey(doc) { |k| k.to_s.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛') }
+      doc
     end
 
     # Prepare the doc for consumption out of MongoDB (takes care of keys
@@ -306,7 +315,8 @@ module Mon
     #
     def from_mongo(docs)
 
-      rekey(docs) { |k| k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.') }
+      # rekey(docs) { |k| k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.') }
+      docs
     end
 
     # rekeys hashes and sub-hashes. Simpler than Ruote.deep_mutate
